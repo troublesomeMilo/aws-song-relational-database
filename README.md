@@ -1,6 +1,6 @@
 ## Data Modeling with Amazon Redshift and AWS Resources - Song Play Database
 
-By Harley 
+By Harley Hutchins
 
 ### Objective
 
@@ -16,8 +16,6 @@ The objective of this repository is to show how AWS resources can be use to buil
 To run the program, two steps must be taken in the AWS management console: 1) A redshift cluster must be spun up and 2) a redshift IAM role allowing read access to S3 must be created. The `dwh_template.cfg` file must be modified to include the following: 1) the redshift cluster information must be added under the `CLUSTER` heading, 2) the IAM role ARN must be added under the `IAM_ROLE` heading, and 3) the config file must be renamed to `dwh.cfg`. 
 
 Once complete, the `create_tables.py` script can be run to create the tables and the `etl.py` script can be run to load the tables with data. 
-
-### Inputs
 
 ### Inputs
 
