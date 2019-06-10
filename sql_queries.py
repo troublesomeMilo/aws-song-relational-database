@@ -1,6 +1,5 @@
 import configparser
 
-
 # CONFIG
 config = configparser.ConfigParser()
 config.read('dwh.cfg')
@@ -20,24 +19,24 @@ time_table_drop = "DROP TABLE IF EXISTS time;"
 staging_events_table_create= ("""
     CREATE TABLE IF NOT EXISTS
         staging_events ( 
-	  	  artist TEXT
-		, auth TEXT
-		, fristName TEXT
-		, gender TEXT
+	  	  artist VARCHAR
+		, auth VARCHAR
+		, firstName VARCHAR
+		, gender VARCHAR
 		, iteminSession INT
-		, lastName TEXT
+		, lastName VARCHAR
 		, length NUMERIC
-		, level TEXT
-		, location TEXT
-	    , method TEXT
-		, page TEXT
-		, registration NUMERIC
+		, level VARCHAR
+		, location VARCHAR
+	    , method VARCHAR
+		, page VARCHAR
+		, registration VARCHAR
 		, sessionId INT
-		, song TEXT
+		, song VARCHAR
 		, status INT
 		, ts TIMESTAMP
-		, userAgent TEXT
-		, userId INT
+		, userAgent VARCHAR
+		, userId VARCHAR
 		);
 """)
 
@@ -45,13 +44,13 @@ staging_songs_table_create = ("""
     CREATE TABLE IF NOT EXISTS
 	  staging_songs (
 	      num_songs INT
-		, artist_id INT
+		, artist_id VARCHAR
 		, artist_latitude NUMERIC
-		, artist_longitude NUMBERIC
-		, artist_location TEXT
-		, artist_name TEXT
+		, artist_longitude NUMERIC
+		, artist_location VARCHAR(MAX)
+		, artist_name VARCHAR(MAX)
 		, song_id VARCHAR
-		, title TEXT
+		, title VARCHAR(MAX)
 		, duration NUMERIC
 		, year INT
 		);
@@ -60,14 +59,14 @@ staging_songs_table_create = ("""
 songplay_table_create = ("""
     CREATE TABLE IF NOT EXISTS 
       songplays ( 
-	      songplay_id IDENTITY(0,1) 
-        , start_time VARCHAR NOT NULL 
-        , user_id INT NOT NULL 
+	      songplay_id INT IDENTITY(0,1) 
+        , start_time TIMESTAMP NOT NULL 
+        , user_id VARCHAR NOT NULL 
         , level TEXT 
         , song_id VARCHAR 
         , artist_id VARCHAR 
         , session_id INT 
-        , location VARCHAR 
+        , location VARCHAR(MAX)
         , user_agent VARCHAR 
         , PRIMARY KEY (songplay_id)
 		);
@@ -89,7 +88,7 @@ song_table_create = ("""
     CREATE TABLE IF NOT EXISTS 
       songs ( 
           song_id VARCHAR 
-        , title VARCHAR NOT NULL 
+        , title VARCHAR(MAX) NOT NULL 
         , artist_id VARCHAR NOT NULL 
         , year INT 
         , duration REAL 
@@ -101,9 +100,9 @@ artist_table_create = ("""
     CREATE TABLE IF NOT EXISTS 
       artists ( 
           artist_id VARCHAR 
-        , name VARCHAR NOT NULL 
-        , location VARCHAR 
-        , lattitude NUMERIC 
+        , name VARCHAR(MAX) NOT NULL 
+        , location VARCHAR(MAX) 
+        , latitude NUMERIC 
         , longitude NUMERIC 
         , PRIMARY KEY (artist_id)
 		);
@@ -116,7 +115,7 @@ time_table_create = ("""
         , hour INT 
         , day INT 
         , week INT 
-        , month INT 
+        , month TEXT 
         , year INT 
         , weekday TEXT 
         , PRIMARY KEY (start_time)
@@ -130,12 +129,15 @@ staging_events_copy = ("""
 	FROM {}
 	IAM_ROLE {}
 	JSON {}
+	REGION 'us-west-2'
+	TIMEFORMAT 'epochmillisecs'
 """).format(config['S3']['LOG_DATA'], config['IAM_ROLE']['ARN'], config['S3']['LOG_JSONPATH'])
 
 staging_songs_copy = ("""
     COPY staging_songs
 	FROM {}
 	IAM_ROLE {}
+	REGION 'us-west-2'
 	JSON 'auto'
 """).format(config['S3']['SONG_DATA'], config['IAM_ROLE']['ARN'])
 
@@ -143,8 +145,8 @@ staging_songs_copy = ("""
 
 songplay_table_insert = ("""
     INSERT INTO songplays (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent)
-	SELECT e.start_time, e.user_id, e.level, s.song_id, s.artist_id, e.session_id, e.location, e.user_agent
-	FROM (SELECT TIMESTAMP 'epoch' + ts / 1000 * interval '1 second' AS start_time, *
+	SELECT e.start_time, e.userid, e.level, s.song_id, s.artist_id, e.sessionid, e.location, e.useragent
+	FROM (SELECT ts AS start_time, *
 	      FROM staging_events
 		  WHERE page = 'NextSong') e
 	LEFT JOIN staging_songs s
